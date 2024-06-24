@@ -1,0 +1,143 @@
+<template>
+    <div ref="chart" style="width: 100%; height: 100%;"></div>
+  </template>
+  
+  <script>
+import * as echarts from 'echarts';  // 导入 echarts 库
+import { passInfo } from '@/api/passinfo';  // 导入 API 请求函数
+
+export default {
+  name: 'PassInfo',
+  data() {
+    return {
+      chartData: null,  // 存储从后端获取的数据
+      chartInstance: null,  // 存储 ECharts 实例
+    };
+  },
+  mounted() {
+    // 页面加载时自动获取数据并绘制图表
+    this.getInfo();
+  },
+  methods: {
+    async getInfo() {
+      try {
+        const response = await passInfo('GET', '/back/chart1/');  // 发起请求获取数据
+        this.chartData = response.data;  // 保存数据
+        console.log(this.chartData);  // 输出数据以确认获取成功
+        this.drawChart();  // 获取数据后立即绘制图表
+      } catch (error) {
+        console.error('An error occurred:', error);
+      }
+    },
+    drawChart() {
+      if (!this.chartData) {
+        console.error('Chart data is not available');
+        return;
+      }
+
+      // 初始化 ECharts 实例
+      this.chartInstance = echarts.init(this.$refs.chart);
+
+      // 准备数据
+      const letters = Object.keys(this.chartData);  // 获取字母数组
+      const values = Object.values(this.chartData);  // 获取对应值数组
+
+      // 配置项
+      const option = {
+        title: {
+          text: '各地区招聘数统计',
+          left: 'center',
+          textStyle: {
+            color: 'white'
+          },
+          subtext: '单位：招聘数-条',
+          subtextStyle: {
+            color: '#b0c7e7'
+          }
+        },
+        tooltip: {
+          trigger: 'axis',
+          axisPointer: {
+            type: 'shadow'
+          }
+        },
+        xAxis: {
+          type: 'value',
+          boundaryGap: [0, 0.01],
+          axisLine: {
+            lineStyle: {
+              color: 'white'
+            }
+          },
+          axisLabel: {
+            textStyle: {
+              color: 'white'
+            }
+          },
+          splitLine: {
+            lineStyle: {
+              color: 'white'
+            }
+          }
+        },
+        yAxis: {
+          type: 'category',
+          data: letters,
+          axisLine: {
+            lineStyle: {
+              color: 'white'
+            }
+          },
+          axisLabel: {
+            textStyle: {
+              color: 'white'
+            }
+          },
+          splitLine: {
+            lineStyle: {
+              color: 'white'
+            }
+          }
+        },
+        series: [
+          {
+            type: 'bar',
+            data: values,
+            itemStyle: {
+              color: (params) => {
+                const colorList = ['#516b91','#59c4e6','#93b7e3','#cbef99','#f6d676'];
+                return colorList[params.dataIndex % colorList.length];
+              }
+            },
+            label: {
+              show: true,
+              position: 'insideRight',
+              textStyle: {
+                color: 'white'
+              }
+            }
+          }
+        ]
+      };
+
+      // 使用配置项绘制图表
+      this.chartInstance.setOption(option);
+
+      // 监听窗口大小变化，使图表自适应
+      window.addEventListener('resize', () => {
+        this.chartInstance.resize();
+      });
+    }
+  }
+};
+</script>
+
+  
+  <style scoped>
+  /* 确保容器有明确的尺寸 */
+  div[ref="chart"] {
+    width: 100%;
+    height: 100%;
+  }
+  </style>
+  
